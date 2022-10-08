@@ -5,22 +5,43 @@ using UnityEngine.InputSystem;
 
 public class PlayerControll : MonoBehaviour
 {
+    [Space]
+
+    private PlayerInput input;
+    private InputAction moveInput;
+    private InputAction jumpInput;
+    private InputAction middleButton;
+    private InputAction lookInput;
+
+    [Space]
+
     public Rigidbody rb;
+    public CharacterController characterController;
+
+    [Space]
+
     public float moveSpeed = 5f;
-    public Vector2 moveDirection;
-    private bool jumped = false;
-    public float jumpPower = 5f;
+    public float jumpHeight = 1f;
+    public float lookSpeed = 5f;
 
-    public Rigidbody bulletRb;
-    public Transform tr;
-    public float fireCooldown = 1f;
-    private bool coolDown = false;
-    
-    public PlayerInput input;
+    [Space]
 
-    private InputAction move;
-    private InputAction jump;
-    private InputAction fire;
+    public float gravityMultiplier = 2f;
+    public const float gravity = -9.81f;
+
+    [Space]
+
+    public Transform groundCheck;
+    public float groundDistance = 0.4f;
+    public LayerMask groundMask;
+
+    [Space]
+
+    private Vector3 move;
+    private Vector2 turn;
+    [SerializeField]
+    private Vector3 velocity;
+    private bool isGrounded;
 
     private void Awake()
     {
@@ -29,49 +50,62 @@ public class PlayerControll : MonoBehaviour
 
     private void OnEnable()
     {
-        move = input.Player.Move;
-        move.Enable();
-        jump = input.Player.Jump;
-        jump.Enable();
-        fire = input.Player.Fire;
-        fire.Enable();
+        moveInput = input.Player.Move;
+        moveInput.Enable();
+
+        jumpInput = input.Player.Jump;
+        jumpInput.Enable();
+
+        middleButton = input.Player.MiddleButton;
+        middleButton.Enable();
+
+        lookInput = input.Player.Look;
+        lookInput.Enable();
     }
 
     private void OnDisable()
     {
-        move.Disable();
-        jump.Disable();
-        fire.Disable();
-    }
-
-    void Start()
-    {
-        
+        moveInput.Disable();
+        jumpInput.Disable();
+        middleButton.Disable();
+        lookInput.Disable();
     }
 
     void Update()
     {
-        moveDirection = move.ReadValue<Vector2>();
-        if (fire.ReadValue<float>() > 0.5 && !coolDown)
+        // Ground Check
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        // Rotation
+        if (middleButton.ReadValue<float>() > 0.5)
         {
-            Instantiate(bulletRb,new Vector3(tr.position.x, tr.position.y - 1, tr.position.z),tr.rotation);
-            coolDown = true;
+            turn += lookInput.ReadValue<Vector2>();
+            transform.localRotation = Quaternion.Euler(0, turn.x / 10 * lookSpeed, 0);
         }
-        if (fire.ReadValue<float>() < 0.5)
-            coolDown = false;
-        
-        if (jump.ReadValue<float>() < 0.5)
-            jumped = false;
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector3(moveDirection.x * moveSpeed, rb.velocity.y, moveDirection.y * moveSpeed);
-
-        if (tr.position.y < 1.1 && jump.ReadValue<float>() > 0.5 && !jumped)
+        // Gorund Stop
+        if(isGrounded && velocity.y < 0)
         {
-            rb.velocity = new Vector3(rb.velocity.x, jumpPower, rb.velocity.x);
-            jumped = true;
+            velocity.y = -2f;
         }
+
+        // Movement
+        move = transform.right * moveInput.ReadValue<Vector2>().x + transform.forward * moveInput.ReadValue<Vector2>().y;
+        characterController.Move(move * moveSpeed/100);
+
+
+        // Jumping
+        if (jumpInput.ReadValue<float>() > 0.5 && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity * gravityMultiplier);
+        }
+
+        // Gravity        
+        velocity.y += gravity * gravityMultiplier / 60;
+
+        characterController.Move(velocity * Time.deltaTime);
     }
 }
