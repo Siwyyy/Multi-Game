@@ -32,7 +32,7 @@ public class PlayerControll : MonoBehaviour
     [Space]
 
     public Transform groundCheck;
-    public float groundDistance = 0.4f;
+    public float groundDistance = 0.1f;
     public LayerMask groundMask;
 
     [Space]

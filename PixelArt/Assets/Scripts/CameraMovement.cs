@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -15,9 +16,12 @@ public class CameraMovement : MonoBehaviour
 
     [Space]
 
-    public float camSpeed = 3f;
-    public float camHeight = 11f;
-    public Quaternion camAngle = new Quaternion(40, 0, 0, 0);
+    [Range(1, 50)]
+    public float camSpeed = 10f;
+    [Range(1, 50)]
+    public float camDistance = 10f;
+    [Range(1, 20)]
+    public float camHeight = 10f;
 
     [Space]
     private Vector3 targetPosition;
@@ -29,15 +33,10 @@ public class CameraMovement : MonoBehaviour
 
     private void Update()
     {
-        targetPosition = playerTr.position + playerTr.forward * -10 + new Vector3(0, camHeight, 0);
+        targetPosition = playerTr.position + playerTr.forward * -camDistance + new Vector3(0, camHeight, 0);
         distance = targetPosition - rb.position;
 
         transform.rotation = Quaternion.LookRotation(playerTr.position - transform.position);
-
-        //targetRotation = playerTr.rotation;
-        //targetRotation.x = 40;
-        //transform.RotateAround(playerTr.position, new Vector3(0, 1, 0), 0.1f);
-        //Debug.Log(transform.rotation);
     }
 
     void FixedUpdate()
